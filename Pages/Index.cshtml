@@ -1,0 +1,84 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+
+@if (!String.IsNullOrEmpty(Model.GatewayResponse)) {
+    <div class="text-center">
+        <h2>Previous Response</h2>
+        <p><pre>@Model.GatewayResponse</pre></p>
+    </div>
+}
+
+<form method="POST" id="payment-form">
+    <!-- Other input fields to capture relevant data -->
+    <label for="billing-zip">Billing Zip Code</label>
+    <input id="billing-zip" name="billingZip" type="tel" />
+
+    <!-- Targets for the credit card form's fields -->
+    <div id="credit-card-card-number"></div>
+    <div id="credit-card-card-cvv"></div>
+    <div id="credit-card-card-expiration"></div>
+    <div id="credit-card-submit"></div>
+</form>
+
+<script src="https://api2.heartlandportico.com/SecureSubmit.v1/token/gp-1.0.1/globalpayments.js"></script>
+<script>
+    GlobalPayments.configure({
+        publicApiKey: "pkapi_cert_jKc1FtuyAydZhZfbB3"
+    });
+
+    GlobalPayments.on("error", (error) => {
+        console.error(error);
+    });
+
+    const cardForm = GlobalPayments.ui.form({
+        fields: {
+            "card-number": {
+                placeholder: "•••• •••• •••• ••••",
+                target: "#credit-card-card-number"
+            },
+            "card-expiration": {
+                placeholder: "MM / YYYY",
+                target: "#credit-card-card-expiration"
+            },
+            "card-cvv": {
+                placeholder: "•••",
+                target: "#credit-card-card-cvv"
+            },
+            "submit": {
+                target: "#credit-card-submit",
+                value: "Submit",
+            }
+        },
+        styles: {
+            // Your styles
+        }
+    });
+
+    // form-level event handlers. examples:
+    cardForm.ready(() => {
+        console.log("Registration of all credit card fields occurred");
+    });
+    cardForm.on("token-success", (resp) => {
+        // add payment token to form as a hidden input
+        const token = document.createElement("input");
+        token.type = "hidden";
+        token.name = "paymentReference";
+        token.value = resp.paymentReference;
+
+        // submit data to the integration's backend for processing
+        const form = document.getElementById("payment-form");
+        form.appendChild(token);
+        form.submit();
+    });
+    cardForm.on("token-error", (resp) => {
+        // show error to the consumer
+    });
+</script>
